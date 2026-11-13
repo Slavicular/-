@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Учёт · заметки и бухгалтерия</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    color-scheme: dark;
+    --bg:#0e1014; --panel:#161a21; --panel2:#1c2129; --border:#262c36;
+    --text:#e6e9ef; --muted:#8b95a5; --accent:#5b9dff;
+    --green:#3ddc84; --red:#ff5d6c; --radius:14px;
+  }
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  input,select,textarea,button{font:inherit;color:inherit}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+    padding:9px 12px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s;
+  }
+  input:focus,select:focus,textarea:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,157,255,.15);
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px;cursor:pointer;flex:0 0 auto}
+  textarea{resize:none;min-height:90px;line-height:1.5}
+
+  .app{display:flex;min-height:100vh}
+  .sidebar{
+    width:250px;flex:0 0 250px;border-right:1px solid var(--border);
+    padding:22px 16px;display:flex;flex-direction:column;gap:18px;
+    position:sticky;top:0;height:100vh;
+    background:linear-gradient(180deg,#11141a,#0e1014);
+  }
+  .logo{font-weight:700;font-size:16px;letter-spacing:.2px;padding:0 6px}
+  .logo small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .nav{display:flex;flex-direction:column;gap:6px}
+  .nav button{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:transparent;border:none;padding:10px 12px;border-radius:10px;
+    color:var(--muted);cursor:pointer;transition:.15s;
+  }
+  .nav button:hover{background:var(--panel);color:var(--text)}
+  .nav button.active{background:var(--panel2);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+  .save-area{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+  .status{font-size:12px;color:var(--muted);padding:0 4px;min-height:16px}
+  .status.ok{color:var(--green)}
+  .status.warn{color:#f5b942}
+  main{flex:1;min-width:0;padding:28px 34px 60px;max-width:1280px}
+  h1{font-size:22px;margin:0 0 4px;font-weight:650}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px}
+
+  .btn-primary{
+    background:var(--accent);color:#08101f;border:none;padding:11px 18px;
+    border-radius:11px;font-weight:650;cursor:pointer;transition:.15s;
+  }
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-danger{background:var(--red);color:#fff}
+  .btn-ghost{
+    background:transparent;border:1px dashed var(--border);color:var(--muted);
+    padding:9px 12px;border-radius:10px;cursor:pointer;width:100%;transition:.15s;
+  }
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .icon-btn{
+    background:transparent;border:none;color:var(--muted);cursor:pointer;
+    font-size:15px;padding:6px 10px;border-radius:8px;line-height:1;transition:.15s;
+  }
+  .icon-btn:hover{background:rgba(255,93,108,.12);color:var(--red)}
+  .mini-btn{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    padding:6px 11px;border-radius:8px;cursor:pointer;font-size:12px;
+  }
+  .mini-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;
+  }
+  .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+
+  details.card > summary{
+    cursor:pointer;font-weight:650;padding:4px 0;margin:-4px 0 12px;
+    list-style:none;user-select:none;font-size:14px;
+  }
+  details.card > summary::-webkit-details-marker{display:none}
+  details.card > summary::before{
+    content:"▸ ";display:inline-block;transition:transform .15s;
+  }
+  details.card[open] > summary::before{transform:rotate(90deg)}
+
+  .set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+  .set-item{display:flex;flex-direction:column;gap:5px}
+  .set-item > span{font-size:12px;color:var(--muted)}
+  .big-num{font-size:20px;font-weight:700;color:var(--accent)}
+  .weekdays{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .wd-btn{
+    background:var(--panel2);border:1px solid var(--border);color:var(--muted);
+    padding:7px 13px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;transition:.15s;
+  }
+  .wd-btn.on{background:rgba(91,157,255,.15);border-color:var(--accent);color:var(--accent)}
+  .chk-line{
+    display:flex;align-items:center;gap:8px;margin:10px 0;color:var(--text);
+    cursor:pointer;font-size:14px;
+  }
+  .excluded-block{margin-bottom:14px}
+  .excluded-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel2);border:1px solid var(--border);
+    padding:4px 4px 4px 10px;border-radius:8px;font-size:12.5px;
+  }
+  .chip button{
+    background:transparent;border:none;color:var(--muted);cursor:pointer;
+    padding:2px 6px;border-radius:5px;font-size:12px;
+  }
+  .chip button:hover{color:var(--red);background:rgba(255,93,108,.12)}
+  .add-date{display:flex;gap:8px}
+  .add-date input{flex:1}
+  .add-date button{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    padding:0 14px;border-radius:10px;cursor:pointer;white-space:nowrap;
+  }
+  .add-date button:hover{border-color:var(--accent);color:var(--accent)}
+  .avail-line{
+    display:flex;align-items:center;gap:10px;color:var(--text);font-size:14px;
+    padding-top:12px;border-top:1px solid var(--border);
+  }
+  .avail-line input{max-width:130px}
+
+  .totals{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;margin-bottom:14px;
+  }
+  .total-card{
+    background:linear-gradient(160deg,#181d26,#141820);
+    border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;
+  }
+  .t-label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px}
+  .t-value{font-size:20px;font-weight:700;letter-spacing:-.3px}
+  .t-value.green{color:var(--green)}
+  .t-value.red{color:var(--red)}
+  .t-value.sm{font-size:16px}
+  .time-status{
+    font-size:13px;padding:11px 14px;border-radius:10px;
+    margin-bottom:22px;background:var(--panel);border:1px solid var(--border);
+    color:var(--muted);
+  }
+  .time-status.ok{border-color:rgba(61,220,132,.35);color:var(--green)}
+  .time-status.warn{border-color:rgba(255,93,108,.35);color:var(--red)}
+
+  .projects{display:flex;flex-direction:column;gap:16px}
+  .project-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+  .project-name{
+    background:transparent!important;border:none!important;padding:4px 2px!important;
+    font-weight:650;font-size:16.5px;box-shadow:none!important;
+  }
+  .project-note{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .link-badge{
+    display:inline-block;background:rgba(91,157,255,.12);
+    color:var(--accent);padding:3px 9px;border-radius:7px;
+    font-size:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field span{font-size:12px;color:var(--muted)}
+
+  .expenses-title{
+    font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;
+    margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;
+  }
+  .expenses-title .hint{text-transform:none;letter-spacing:0;font-size:11.5px;color:#5c6675}
+  .expenses{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+  .expense{
+    display:grid;grid-template-columns:auto minmax(0,1fr) 110px 125px auto;
+    gap:8px;align-items:center;
+  }
+  .expense.off{opacity:.42}
+  .expense.off .exp-name,.expense.off .exp-value,.expense.off .exp-type{text-decoration:line-through}
+
+  .results{
+    display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;padding-top:14px;
+    border-top:1px solid var(--border);
+  }
+  .res{display:flex;flex-direction:column;gap:2px}
+  .res-lbl{font-size:11.5px;color:var(--muted)}
+  .res-val{font-size:17px;font-weight:700;color:var(--green);letter-spacing:-.2px}
+  .res-val.neg{color:var(--red)}
+
+  .combine-line{
+    display:flex;align-items:center;gap:8px;padding:6px 6px;
+    cursor:pointer;border-radius:6px;font-size:14px;
+  }
+  .combine-line:hover{background:var(--panel2)}
+  .combined-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px;margin-top:14px;
+  }
+  .note-small{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+
+  .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+  .note{display:flex;flex-direction:column;gap:10px}
+  .note-head{display:flex;gap:6px;align-items:center}
+  .note-title{
+    background:transparent!important;border:none!important;padding:4px 2px!important;
+    font-weight:650;font-size:15.5px;box-shadow:none!important;
+  }
+  .note-body{
+    background:transparent!important;border:none!important;padding:2px!important;
+    box-shadow:none!important;color:#c9d1dd;font-size:14px;
+  }
+  .note-foot{font-size:11.5px;color:#5c6675;border-top:1px solid var(--border);padding-top:8px}
+  .note-link{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding-top:8px;border-top:1px solid var(--border);
+  }
+
+  .empty{
+    text-align:center;color:var(--muted);padding:46px 20px;
+    border:1px dashed var(--border);border-radius:var(--radius);
+  }
+  .empty b{display:block;color:var(--text);margin-bottom:6px;font-size:16px}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* ===== IMPORT VIEW ===== */
+  .import-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .import-hint{
+    background:var(--panel2);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;font-size:12.5px;color:var(--muted);line-height:1.6;
+  }
+  .import-hint code{
+    background:rgba(91,157,255,.1);color:var(--accent);
+    padding:1px 5px;border-radius:4px;font-size:12px;
+  }
+  .import-hint pre{
+    background:#0b0d11;border:1px solid var(--border);border-radius:8px;
+    padding:12px;font-size:12px;overflow-x:auto;color:#c9d1dd;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin:10px 0;
+  }
+  #importText{
+    min-height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:12.5px;line-height:1.55;background:#0b0d11;
+  }
+  .import-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+  .preview-list{margin-top:6px;font-size:13px;line-height:1.6}
+  .preview-list b{color:var(--text)}
+  @media(max-width:1100px){.import-grid{grid-template-columns:1fr}}
+
+  @media(max-width:820px){
+    .app{flex-direction:column}
+    .sidebar{
+      width:auto;flex:none;height:auto;position:static;flex-direction:row;
+      align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap;
+      border-right:none;border-bottom:1px solid var(--border);
+    }
+    .logo small{display:none}
+    .nav{flex-direction:row;gap:6px;flex-wrap:wrap}
+    .nav button{padding:8px 12px;font-size:14px}
+    .save-area{margin-top:0;margin-left:auto;flex-direction:row;align-items:center}
+    .status{display:none}
+    main{padding:18px 16px 50px}
+    .expense{grid-template-columns:auto minmax(0,1fr) 90px auto;gap:6px}
+    .expense .exp-type{grid-column:2 / 4}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">💰 Мой учёт<small>заметки и бухгалтерия</small></div>
+    <div class="nav">
+      <button data-tab="finance" class="active">📊 Бухгалтерия</button>
+      <button data-tab="notes">📝 Заметки</button>
+      <button data-tab="import">📥 Импорт</button>
+    </div>
+    <div class="save-area">
+      <button id="saveBtn" class="btn-primary">💾 Сохранить</button>
+      <div id="status" class="status">—</div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ================= БУХГАЛТЕРИЯ ================= -->
+    <section id="view-finance">
+      <h1>Бухгалтерия</h1>
+      <p class="sub">Настрой период, рабочие дни и праздники — доход и прибыль посчитаются автоматически.</p>
+
+      <details class="card" id="settingsPanel" open>
+        <summary>⚙️ Период, рабочие дни и время</summary>
+
+        <div class="set-grid">
+          <label class="set-item"><span>Начало периода</span>
+            <input type="date" id="setStart">
+          </label>
+          <label class="set-item"><span>Конец периода</span>
+            <input type="date" id="setEnd">
+          </label>
+          <div class="set-item"><span>Рабочих дней в периоде</span>
+            <div class="big-num" id="workDaysCount">0</div>
+          </div>
+        </div>
+
+        <div class="set-item" style="margin-bottom:14px">
+          <span>Рабочие дни недели</span>
+          <div class="weekdays" id="weekdayToggles"></div>
+        </div>
+
+        <label class="chk-line">
+          <input type="checkbox" id="setExcludeHolidays">
+          Исключить государственные праздники РФ
+        </label>
+
+        <div class="excluded-block">
+          <div class="set-item" style="margin-bottom:8px">
+            <span>Исключённые даты (отпуск, ДР, личные дела)</span>
+          </div>
+          <div class="excluded-list" id="excludedList"></div>
+          <div class="add-date">
+            <input type="date" id="newExcludeDate">
+            <button id="addExclude">+ Добавить</button>
+          </div>
+        </div>
+
+        <label class="avail-line">
+          <span>Доступное время в рабочий день, мин:</span>
+          <input type="number" id="setAvailTime" min="0" step="any">
+        </label>
+      </details>
+
+      <div class="totals">
+        <div class="total-card"><span class="t-label">Рабочих дней</span><span class="t-value" id="t-days">0</span></div>
+        <div class="total-card"><span class="t-label">Доход за период</span><span class="t-value" id="t-income">0 ₽</span></div>
+        <div class="total-card"><span class="t-label">Налоги + расходы</span><span class="t-value red" id="t-exp">0 ₽</span></div>
+        <div class="total-card"><span class="t-label">Чистыми за период</span><span class="t-value green" id="t-net">0 ₽</span></div>
+        <div class="total-card"><span class="t-label">Время в день</span><span class="t-value sm" id="t-time">0 / 0</span></div>
+      </div>
+
+      <div id="timeStatus" class="time-status">Добавь проекты, чтобы увидеть расчёт.</div>
+
+      <details class="card" id="combinePanel" style="margin-bottom:18px">
+        <summary>🔗 Объединить проекты</summary>
+        <div id="combineChecks"></div>
+        <div id="combinedResult"></div>
+      </details>
+
+      <div class="toolbar">
+        <button class="btn-primary" id="addProject">+ Добавить проект</button>
+        <button class="mini-btn" id="gotoImport">📥 Импорт из текста</button>
+      </div>
+
+      <div class="projects" id="projects"></div>
+    </section>
+
+    <!-- ================= ЗАМЕТКИ ================= -->
+    <section id="view-notes" hidden>
+      <h1>Заметки и идеи</h1>
+      <p class="sub">Идеи для бизнеса, планы и мысли. Из каждой идеи можно создать проект.</p>
+      <div class="toolbar">
+        <button class="btn-primary" id="addNote">+ Новая заметка</button>
+        <button class="mini-btn" id="gotoImport2">📥 Импорт из текста</button>
+      </div>
+      <div class="notes-grid" id="notes"></div>
+    </section>
+
+    <!-- ================= ИМПОРТ ================= -->
+    <section id="view-import" hidden>
+      <h1>📥 Импорт данных</h1>
+      <p class="sub">Вставь текст от ИИ или вручную — проекты и заметки создадутся автоматически.</p>
+
+      <div class="import-grid">
+        <div class="card">
+          <div class="toolbar" style="margin-bottom:12px">
+            <button class="btn-primary" id="importAppend">➕ Добавить к существующим</button>
+            <button class="btn-primary btn-danger" id="importReplace">🔄 Заменить всё</button>
+            <button class="mini-btn" id="copyPrompt">📋 Скопировать промт для ИИ</button>
+            <button class="mini-btn" id="loadExample">📄 Вставить пример</button>
+            <button class="mini-btn" id="clearImport">🧹 Очистить</button>
+          </div>
+          <textarea id="importText" placeholder="Вставь сюда текст от ИИ (или нажми «Вставить пример»)…" spellcheck="false"></textarea>
+          <div id="importPreview"></div>
+        </div>
+
+        <div class="import-hint">
+          <b style="color:var(--text)">Формат, который понимает сайт</b><br>
+          Каждый блок начинается с <code>## PROJECT</code> или <code>## NOTE</code>. Внутри — строки <code>ключ: значение</code>.
+          <pre>## PROJECT
+name: ИИ-контент
+income: 1000
+tax: 6
+time: 60
+expense: Подписка | 100 | fixed
+expense: Продвижение | 5 | percent
+
+## NOTE
+title: Идея для города
+content: Многострочный
+текст заметки
+можно любой длины</pre>
+          <b style="color:var(--text)">Поддерживается JSON</b> — если текст начинается с <code>{</code> или <code>[</code>, он будет разобран как JSON.<br><br>
+          <b style="color:var(--text)">Типы расходов</b><br>
+          <code>fixed</code> — фиксированная сумма ₽/день<br>
+          <code>percent</code> — процент от дневного дохода<br><br>
+          <b style="color:var(--text)">Кнопка «Скопировать промт»</b> даёт готовую инструкцию для ChatGPT/Claude — вставь её, добавь задачу, получи ответ в нужном формате.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "my-biz-tracker-v2";
+  const OLD_KEY = "my-biz-tracker-v1";
+  const HOLIDAYS_MD = new Set([
+    "01-01","01-02","01-03","01-04","01-05","01-06","01-07","01-08",
+    "02-23","03-08","05-01","05-09","06-12","11-04"
+  ]);
+  const DAY_NAMES = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const DAY_ORDER = [1,2,3,4,5,6,0];
+
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+  const fmt = n => n.toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+  const fmtISO = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  const fmtDateRU = iso => { const [y,m,d] = iso.split("-"); return `${d}.${m}.${y}`; };
+
+  let state = null;
+  let workDaysCache = [];
+  let dirty = false;
+  let autoTimer = null;
+
+  /* ============ НАСТРОЙКИ ============ */
+  function defaultSettings(){
+    const Y = new Date().getFullYear();
+    return {
+      startDate: `${Y}-02-01`,
+      endDate: `${Y}-12-31`,
+      workDays: [1,2,3,4,5],
+      excludeHolidays: true,
+      excludedDates: [],
+      availableTimePerDay: 480
+    };
+  }
+
+  function seed(){
+    state = { notes: [], projects: [], settings: defaultSettings() };
+    const noteDefs = [
+      { title:"Аренда квартиры", content:"Сдаю однушку. Доход 1500 ₽/день, налог 6%. Расходы: коммуналка 150 ₽/день, ремонт 5%. Время: 20 мин/день." },
+      { title:"Онлайн-курс по финансам", content:"Курс из 8 уроков. Доход ~1200 ₽/день. Расходы: платформа 100 ₽/день, реклама 15%. Время: 2 часа/день." },
+      { title:"Аренда инструмента", content:"Перфоратор и шуруповёрт. Доход 800 ₽/день. Расходы: ремонт 10%, объявления 100 ₽/день. Время: 30 мин/день." }
+    ];
+    state.notes = noteDefs.map((n,i) => ({
+      id: uid(), title: n.title, content: n.content,
+      date: Date.now() - i*86400000, projectId: null
+    }));
+    const p1 = { id: uid(), name: "Аренда квартиры", income: 1500, taxPercent: 6, timePerDay: 20,
+      noteId: state.notes[0].id,
+      expenses: [
+        { id: uid(), name: "Коммуналка", value: 150, type: "fixed", active: true },
+        { id: uid(), name: "Ремонт", value: 5, type: "percent", active: true }
+      ] };
+    state.notes[0].projectId = p1.id;
+    const p2 = { id: uid(), name: "Онлайн-курс", income: 1200, taxPercent: 6, timePerDay: 120,
+      noteId: state.notes[1].id,
+      expenses: [
+        { id: uid(), name: "Платформа", value: 100, type: "fixed", active: true },
+        { id: uid(), name: "Реклама", value: 15, type: "percent", active: true }
+      ] };
+    state.notes[1].projectId = p2.id;
+    const p3 = { id: uid(), name: "Аренда инструмента", income: 800, taxPercent: 6, timePerDay: 30,
+      noteId: state.notes[2].id,
+      expenses: [
+        { id: uid(), name: "Ремонт", value: 10, type: "percent", active: true },
+        { id: uid(), name: "Объявления", value: 100, type: "fixed", active: true }
+      ] };
+    state.notes[2].projectId = p3.id;
+    state.projects = [p1, p2, p3];
+  }
+
+  /* ============ ЗАГРУЗКА / СОХРАНЕНИЕ ============ */
+  function load(){
+    let parsed = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) parsed = JSON.parse(raw);
+    } catch(e){ console.warn(e); }
+    if(!parsed){
+      try {
+        const old = localStorage.getItem(OLD_KEY);
+        if(old){
+          const o = JSON.parse(old);
+          parsed = {
+            notes: (o.notes || []).map(n => ({...n, projectId: null})),
+            projects: (o.projects || []).map(p => ({...p, timePerDay: 0, noteId: null})),
+            settings: defaultSettings()
+          };
+        }
+      } catch(e){ console.warn(e); }
+    }
+    if(!parsed){ seed(); return; }
+    state = {
+      notes: Array.isArray(parsed.notes) ? parsed.notes : [],
+      projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+      settings: Object.assign(defaultSettings(), parsed.settings || {})
+    };
+    state.projects.forEach(p => {
+      if(!Array.isArray(p.expenses)) p.expenses = [];
+      if(p.timePerDay == null) p.timePerDay = 0;
+      if(p.noteId === undefined) p.noteId = null;
+    });
+    state.notes.forEach(n => { if(n.projectId === undefined) n.projectId = null; });
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      dirty = false;
+      const el = $("#status");
+      el.textContent = "Сохранено · " + new Date().toLocaleTimeString("ru-RU");
+      el.className = "status ok";
+    }catch(e){
+      const el = $("#status");
+      el.textContent = "Ошибка сохранения!";
+      el.className = "status warn";
+      console.error(e);
+    }
+  }
+
+  function markDirty(){
+    dirty = true;
+    const el = $("#status");
+    el.textContent = "Не сохранено…";
+    el.className = "status warn";
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(save, 1500);
+  }
+
+  /* ============ РАБОЧИЕ ДНИ ============ */
+  function isHoliday(d){
+    const mmdd = String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    return HOLIDAYS_MD.has(mmdd);
+  }
+
+  function getWorkingDaysList(){
+    const { startDate, endDate, workDays, excludeHolidays, excludedDates } = state.settings;
+    if(!startDate || !endDate) return [];
+    const start = new Date(startDate + "T00:00:00");
+    const end   = new Date(endDate   + "T00:00:00");
+    if(isNaN(start) || isNaN(end) || end < start) return [];
+    const wdSet = new Set(workDays);
+    const exSet = new Set(excludedDates);
+    const out = [];
+    const d = new Date(start);
+    while(d <= end){
+      const dow = d.getDay();
+      const iso = fmtISO(d);
+      let ok = wdSet.has(dow) && !exSet.has(iso);
+      if(ok && excludeHolidays && isHoliday(d)) ok = false;
+      if(ok) out.push(iso);
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+
+  /* ============ РАСЧЁТ ============ */
+  function calcProject(p, workDaysCount){
+    const incomePerDay = num(p.income);
+    const taxPerDay = incomePerDay * num(p.taxPercent) / 100;
+    let expPerDay = 0;
+    (p.expenses || []).forEach(e => {
+      if(e.active === false) return;
+      const v = num(e.value);
+      expPerDay += (e.type === "percent") ? incomePerDay * v / 100 : v;
+    });
+    const netPerDay = incomePerDay - taxPerDay - expPerDay;
+    return {
+      incomePerDay, taxPerDay, expPerDay, netPerDay,
+      totalIncome: incomePerDay * workDaysCount,
+      totalTax: taxPerDay * workDaysCount,
+      totalExp: expPerDay * workDaysCount,
+      totalNet: netPerDay * workDaysCount,
+      timePerDay: num(p.timePerDay)
+    };
+  }
+
+  function updateTotals(){
+    const n = workDaysCache.length;
+    let income = 0, out = 0, net = 0, time = 0;
+    state.projects.forEach(p => {
+      const c = calcProject(p, n);
+      income += c.totalIncome;
+      out    += c.totalTax + c.totalExp;
+      net    += c.totalNet;
+      time   += c.timePerDay;
+    });
+    $("#t-days").textContent = n;
+    $("#t-income").textContent = fmt(income) + " ₽";
+    $("#t-exp").textContent = "−" + fmt(out) + " ₽";
+    const netEl = $("#t-net");
+    netEl.textContent = fmt(net) + " ₽";
+    netEl.classList.toggle("red", net < 0);
+    netEl.classList.toggle("green", net >= 0);
+    const avail = num(state.settings.availableTimePerDay);
+    const tEl = $("#t-time");
+    tEl.textContent = fmt(time) + " / " + fmt(avail);
+    tEl.classList.toggle("red", time > avail);
+    const ts = $("#timeStatus");
+    if(state.projects.length === 0){
+      ts.textContent = "Добавь проекты, чтобы увидеть расчёт.";
+      ts.className = "time-status";
+    } else if(time > avail){
+      ts.textContent = `⚠️ Перебор по времени: нужно ${fmt(time)} мин/день, доступно ${fmt(avail)}.`;
+      ts.className = "time-status warn";
+    } else {
+      ts.textContent = `✅ Время вписывается: ${fmt(time)} из ${fmt(avail)} мин/день. Если уложишься во все — получишь ${fmt(net)} ₽ за период.`;
+      ts.className = "time-status ok";
+    }
+  }
+
+  /* ============ КАРТОЧКА ПРОЕКТА ============ */
+  function updateProjectCalc(card, p){
+    const c = calcProject(p, workDaysCache.length);
+    const netEl = card.querySelector(".net");
+    netEl.textContent = fmt(c.totalNet) + " ₽";
+    netEl.classList.toggle("neg", c.totalNet < 0);
+    const dayEl = card.querySelector(".day");
+    dayEl.textContent = fmt(c.netPerDay) + " ₽";
+    dayEl.classList.toggle("neg", c.netPerDay < 0);
+    card.querySelector(".time").textContent = fmt(c.timePerDay) + " мин";
+  }
+
+  function buildProjectCard(p){
+    const card = document.createElement("div");
+    card.className = "card project";
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="project-head">
+        <input class="project-name" type="text" placeholder="Название актива / проекта">
+        <button class="icon-btn del-project" title="Удалить проект">✕</button>
+      </div>
+      <div class="project-note"></div>
+      <div class="fields">
+        <label class="field"><span>Доход в рабочий день, ₽</span>
+          <input type="number" class="inp-income" step="any" min="0" placeholder="0">
+        </label>
+        <label class="field"><span>Налог, %</span>
+          <input type="number" class="inp-tax" step="any" min="0" placeholder="0">
+        </label>
+        <label class="field"><span>Время в день, мин</span>
+          <input type="number" class="inp-time" step="any" min="0" placeholder="0">
+        </label>
+      </div>
+      <div class="expenses-title">
+        Расходы <span class="hint">— сними галочку, чтобы отключить пункт</span>
+      </div>
+      <div class="expenses"></div>
+      <button class="btn-ghost add-expense">+ Добавить расход</button>
+      <div class="results">
+        <div class="res"><span class="res-lbl">Чистыми за период</span><span class="res-val net"></span></div>
+        <div class="res"><span class="res-lbl">В рабочий день</span><span class="res-val day"></span></div>
+        <div class="res"><span class="res-lbl">Время/день</span><span class="res-val time"></span></div>
+      </div>
+    `;
+    card.querySelector(".project-name").value = p.name || "";
+    card.querySelector(".inp-income").value = p.income ?? "";
+    card.querySelector(".inp-tax").value = p.taxPercent ?? "";
+    card.querySelector(".inp-time").value = p.timePerDay ?? "";
+
+    const noteBox = card.querySelector(".project-note");
+    const linkedNote = p.noteId ? state.notes.find(n => n.id === p.noteId) : null;
+    if(linkedNote){
+      noteBox.style.display = "flex";
+      const badge = document.createElement("span");
+      badge.className = "link-badge";
+      badge.textContent = "💡 Идея: " + (linkedNote.title || "(без названия)");
+      const btn = document.createElement("button");
+      btn.className = "mini-btn";
+      btn.textContent = "Открыть";
+      btn.addEventListener("click", () => {
+        switchTab("notes");
+        setTimeout(() => {
+          const el = document.querySelector(`.note[data-id="${linkedNote.id}"]`);
+          if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+        }, 100);
+      });
+      noteBox.append(badge, btn);
+    }
+
+    card.querySelector(".project-name").addEventListener("input", e => { p.name = e.target.value; markDirty(); });
+    card.querySelector(".inp-income").addEventListener("input", e => {
+      p.income = num(e.target.value);
+      updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+    });
+    card.querySelector(".inp-tax").addEventListener("input", e => {
+      p.taxPercent = num(e.target.value);
+      updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+    });
+    card.querySelector(".inp-time").addEventListener("input", e => {
+      p.timePerDay = num(e.target.value);
+      updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+    });
+    card.querySelector(".del-project").addEventListener("click", () => {
+      if(!confirm("Удалить «" + (p.name || "без названия") + "»?")) return;
+      if(p.noteId){
+        const note = state.notes.find(n => n.id === p.noteId);
+        if(note) note.projectId = null;
+      }
+      state.projects = state.projects.filter(x => x.id !== p.id);
+      renderProjects(); renderNotes(); markDirty();
+    });
+    card.querySelector(".add-expense").addEventListener("click", () => {
+      p.expenses.push({ id: uid(), name: "", value: 0, type: "fixed", active: true });
+      renderExpenses(card, p);
+      updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+    });
+    renderExpenses(card, p);
+    updateProjectCalc(card, p);
+    return card;
+  }
+
+  function renderExpenses(card, p){
+    const box = card.querySelector(".expenses");
+    box.innerHTML = "";
+    (p.expenses || []).forEach(e => {
+      const row = document.createElement("div");
+      row.className = "expense" + (e.active === false ? " off" : "");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = e.active !== false; cb.title = "Включить / выключить";
+      const nm = document.createElement("input");
+      nm.type = "text"; nm.className = "exp-name"; nm.placeholder = "Название"; nm.value = e.name || "";
+      const vl = document.createElement("input");
+      vl.type = "number"; vl.className = "exp-value"; vl.step = "any"; vl.min = "0"; vl.placeholder = "0"; vl.value = e.value ?? 0;
+      const sl = document.createElement("select");
+      sl.className = "exp-type";
+      sl.innerHTML = '<option value="fixed">₽ / день</option><option value="percent">% от дохода</option>';
+      sl.value = e.type || "fixed";
+      const del = document.createElement("button");
+      del.className = "icon-btn"; del.textContent = "✕"; del.title = "Удалить";
+      cb.addEventListener("change", () => {
+        e.active = cb.checked; row.classList.toggle("off", !cb.checked);
+        updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+      });
+      nm.addEventListener("input", () => { e.name = nm.value; markDirty(); });
+      vl.addEventListener("input", () => {
+        e.value = num(vl.value);
+        updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+      });
+      sl.addEventListener("change", () => {
+        e.type = sl.value;
+        updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+      });
+      del.addEventListener("click", () => {
+        p.expenses = p.expenses.filter(x => x.id !== e.id);
+        renderExpenses(card, p);
+        updateProjectCalc(card, p); updateTotals(); updateCombined(); markDirty();
+      });
+      row.append(cb, nm, vl, sl, del);
+      box.appendChild(row);
+    });
+  }
+
+  function renderProjects(){
+    const wrap = $("#projects");
+    wrap.innerHTML = "";
+    if(state.projects.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = "<b>Пока пусто</b>Нажми «Добавить проект» или «Импорт из текста».";
+      wrap.appendChild(empty);
+      recalcAll(); renderCombine();
+      return;
+    }
+    state.projects.forEach(p => wrap.appendChild(buildProjectCard(p)));
+    recalcAll(); renderCombine();
+  }
+
+  function recalcAll(){
+    workDaysCache = getWorkingDaysList();
+    $("#workDaysCount").textContent = workDaysCache.length;
+    $$(".project").forEach(card => {
+      const p = state.projects.find(x => x.id === card.dataset.id);
+      if(p) updateProjectCalc(card, p);
+    });
+    updateTotals(); updateCombined();
+  }
+
+  /* ============ ОБЪЕДИНЕНИЕ ============ */
+  function renderCombine(){
+    const box = $("#combineChecks");
+    const checked = new Set($$(".combine-check:checked", box).map(c => c.dataset.id));
+    box.innerHTML = "";
+    if(state.projects.length === 0){
+      box.innerHTML = "<p class='muted'>Нет проектов.</p>";
+      updateCombined(); return;
+    }
+    state.projects.forEach(p => {
+      const label = document.createElement("label");
+      label.className = "combine-line";
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "combine-check"; cb.dataset.id = p.id;
+      cb.checked = checked.has(p.id);
+      cb.addEventListener("change", updateCombined);
+      label.append(cb, document.createTextNode(" " + (p.name || "(без названия)")));
+      box.appendChild(label);
+    });
+    updateCombined();
+  }
+
+  function updateCombined(){
+    const ids = $$(".combine-check:checked").map(c => c.dataset.id);
+    const box = $("#combinedResult");
+    if(ids.length === 0){
+      box.innerHTML = "<p class='note-small'>Выбери проекты выше, чтобы увидеть, что будет, если заняться только ими.</p>";
+      return;
+    }
+    const n = workDaysCache.length;
+    let income = 0, out = 0, net = 0, time = 0, count = 0;
+    ids.forEach(id => {
+      const p = state.projects.find(x => x.id === id);
+      if(!p) return;
+      const c = calcProject(p, n);
+      income += c.totalIncome; out += c.totalTax + c.totalExp;
+      net += c.totalNet; time += c.timePerDay; count++;
+    });
+    const avail = num(state.settings.availableTimePerDay);
+    box.innerHTML = `
+      <div class="combined-grid">
+        <div class="res"><span class="res-lbl">Проектов</span><span class="res-val">${count}</span></div>
+        <div class="res"><span class="res-lbl">Доход за период</span><span class="res-val">${fmt(income)} ₽</span></div>
+        <div class="res"><span class="res-lbl">Налоги + расходы</span><span class="res-val neg">−${fmt(out)} ₽</span></div>
+        <div class="res"><span class="res-lbl">Чистыми за период</span><span class="res-val ${net<0?'neg':''}">${fmt(net)} ₽</span></div>
+        <div class="res"><span class="res-lbl">Время/день</span><span class="res-val ${time>avail?'neg':''}">${fmt(time)} / ${fmt(avail)} мин</span></div>
+      </div>
+      <p class="note-small">${time > avail
+        ? "⚠️ Не хватает времени — нужно сократить проекты."
+        : "✅ Время вписывается. Если уложишься — доход выше."}</p>
+    `;
+  }
+
+  /* ============ ЗАМЕТКИ ============ */
+  function autoGrow(el){
+    el.style.height = "auto";
+    el.style.height = Math.max(el.scrollHeight, 90) + "px";
+  }
+
+  function renderNotes(){
+    const wrap = $("#notes");
+    wrap.innerHTML = "";
+    if(state.notes.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty"; empty.style.gridColumn = "1 / -1";
+      empty.innerHTML = "<b>Пока нет заметок</b>Нажми «Новая заметка» или «Импорт».";
+      wrap.appendChild(empty); return;
+    }
+    state.notes.forEach(n => {
+      const card = document.createElement("div");
+      card.className = "card note";
+      card.dataset.id = n.id;
+      card.innerHTML = `
+        <div class="note-head">
+          <input class="note-title" type="text" placeholder="Заголовок">
+          <button class="icon-btn del-note" title="Удалить заметку">✕</button>
+        </div>
+        <textarea class="note-body" placeholder="Мысли, идеи, планы…"></textarea>
+        <div class="note-foot"></div>
+        <div class="note-link"></div>
+      `;
+      const title = card.querySelector(".note-title");
+      title.value = n.title || "";
+      title.addEventListener("input", () => { n.title = title.value; markDirty(); });
+      const body = card.querySelector(".note-body");
+      body.value = n.content || "";
+      body.addEventListener("input", () => { n.content = body.value; autoGrow(body); markDirty(); });
+      card.querySelector(".note-foot").textContent =
+        new Date(n.date || Date.now()).toLocaleString("ru-RU", {
+          day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"
+        });
+      card.querySelector(".del-note").addEventListener("click", () => {
+        if(!confirm("Удалить заметку «" + (n.title || "без названия") + "»?")) return;
+        if(n.projectId){
+          const proj = state.projects.find(p => p.id === n.projectId);
+          if(proj) proj.noteId = null;
+        }
+        state.notes = state.notes.filter(x => x.id !== n.id);
+        renderNotes(); renderProjects(); markDirty();
+      });
+      const linkBox = card.querySelector(".note-link");
+      const linkedProject = n.projectId ? state.projects.find(p => p.id === n.projectId) : null;
+      if(linkedProject){
+        const badge = document.createElement("span");
+        badge.className = "link-badge";
+        badge.textContent = "📊 Проект: " + (linkedProject.name || "(без названия)");
+        const openBtn = document.createElement("button");
+        openBtn.className = "mini-btn"; openBtn.textContent = "Открыть";
+        openBtn.addEventListener("click", () => {
+          switchTab("finance");
+          setTimeout(() => {
+            const el = document.querySelector(`.project[data-id="${linkedProject.id}"]`);
+            if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+          }, 100);
+        });
+        const unlinkBtn = document.createElement("button");
+        unlinkBtn.className = "mini-btn"; unlinkBtn.textContent = "Отвязать";
+        unlinkBtn.addEventListener("click", () => {
+          if(!confirm("Отвязать проект от этой идеи?")) return;
+          n.projectId = null;
+          if(linkedProject.noteId === n.id) linkedProject.noteId = null;
+          markDirty(); renderNotes(); renderProjects();
+        });
+        linkBox.append(badge, openBtn, unlinkBtn);
+      } else {
+        const createBtn = document.createElement("button");
+        createBtn.className = "mini-btn";
+        createBtn.textContent = "➕ Создать проект из идеи";
+        createBtn.addEventListener("click", () => {
+          const proj = {
+            id: uid(), name: n.title || "Новый проект",
+            income: 0, taxPercent: 0, timePerDay: 0,
+            noteId: n.id, expenses: []
+          };
+          state.projects.push(proj); n.projectId = proj.id;
+          markDirty(); renderNotes(); renderProjects(); switchTab("finance");
+          setTimeout(() => {
+            const el = document.querySelector(`.project[data-id="${proj.id}"]`);
+            if(el) el.scrollIntoView({behavior:"smooth", block:"center"});
+          }, 100);
+        });
+        linkBox.appendChild(createBtn);
+      }
+      wrap.appendChild(card);
+      requestAnimationFrame(() => autoGrow(body));
+    });
+  }
+
+  /* ============ НАСТРОЙКИ UI ============ */
+  function fillSettingsInputs(){
+    $("#setStart").value = state.settings.startDate || "";
+    $("#setEnd").value = state.settings.endDate || "";
+    $("#setExcludeHolidays").checked = !!state.settings.excludeHolidays;
+    $("#setAvailTime").value = state.settings.availableTimePerDay ?? "";
+  }
+  function renderWeekdays(){
+    const box = $("#weekdayToggles");
+    box.innerHTML = "";
+    DAY_ORDER.forEach(d => {
+      const btn = document.createElement("button");
+      btn.className = "wd-btn" + (state.settings.workDays.includes(d) ? " on" : "");
+      btn.textContent = DAY_NAMES[d];
+      btn.addEventListener("click", () => {
+        const i = state.settings.workDays.indexOf(d);
+        if(i >= 0) state.settings.workDays.splice(i, 1);
+        else state.settings.workDays.push(d);
+        btn.classList.toggle("on"); markDirty(); recalcAll();
+      });
+      box.appendChild(btn);
+    });
+  }
+  function renderExcluded(){
+    const box = $("#excludedList");
+    box.innerHTML = "";
+    if(state.settings.excludedDates.length === 0){
+      box.innerHTML = "<span class='muted'>Нет исключённых дат.</span>"; return;
+    }
+    state.settings.excludedDates.slice().sort().forEach(iso => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      const txt = document.createTextNode(fmtDateRU(iso) + " ");
+      const btn = document.createElement("button");
+      btn.textContent = "✕"; btn.title = "Убрать дату";
+      btn.addEventListener("click", () => {
+        state.settings.excludedDates = state.settings.excludedDates.filter(x => x !== iso);
+        renderExcluded(); markDirty(); recalcAll();
+      });
+      chip.append(txt, btn);
+      box.appendChild(chip);
+    });
+  }
+  function bindSettings(){
+    $("#setStart").addEventListener("change", e => { state.settings.startDate = e.target.value; markDirty(); recalcAll(); });
+    $("#setEnd").addEventListener("change", e => { state.settings.endDate = e.target.value; markDirty(); recalcAll(); });
+    $("#setExcludeHolidays").addEventListener("change", e => { state.settings.excludeHolidays = e.target.checked; markDirty(); recalcAll(); });
+    $("#setAvailTime").addEventListener("input", e => { state.settings.availableTimePerDay = num(e.target.value); markDirty(); recalcAll(); });
+    $("#addExclude").addEventListener("click", () => {
+      const val = $("#newExcludeDate").value;
+      if(!val) return;
+      if(!state.settings.excludedDates.includes(val)){
+        state.settings.excludedDates.push(val);
+        renderExcluded(); markDirty(); recalcAll();
+      }
+      $("#newExcludeDate").value = "";
+    });
+  }
+
+  /* ============ ВКЛАДКИ ============ */
+  function switchTab(tab){
+    $$(".nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    $("#view-finance").hidden = tab !== "finance";
+    $("#view-notes").hidden = tab !== "notes";
+    $("#view-import").hidden = tab !== "import";
+    if(tab === "notes") $$(".note-body").forEach(autoGrow);
+    if(tab === "import") setTimeout(updatePreview, 50);
+  }
+
+  /* ============================================================
+     ИМПОРТ: ПАРСЕР
+     ============================================================ */
+
+  function parseImport(text){
+    text = (text || "").trim();
+    if(!text) throw new Error("Пустой текст");
+    // JSON-режим
+    if(text.startsWith("{") || text.startsWith("[")){
+      try {
+        const json = JSON.parse(text);
+        return parseJSON(json);
+      } catch(e){ /* падаем в блочный режим */ }
+    }
+    return parseBlocks(text);
+  }
+
+  function parseJSON(json){
+    const out = { projects: [], notes: [], settings: null };
+    const items = [];
+    if(Array.isArray(json)){
+      json.forEach(x => items.push({ type: (x.expenses || x.income !== undefined) ? "project" : "note", data: x }));
+    } else if(json.projects || json.notes){
+      (json.projects || []).forEach(p => items.push({ type: "project", data: p }));
+      (json.notes || []).forEach(n => items.push({ type: "note", data: n }));
+      if(json.settings) out.settings = json.settings;
+    } else {
+      items.push({ type: (json.expenses || json.income !== undefined) ? "project" : "note", data: json });
+    }
+    items.forEach(item => {
+      const d = item.data || {};
+      if(item.type === "project"){
+        out.projects.push({
+          id: uid(),
+          name: d.name || d.title || "Без названия",
+          income: num(d.income),
+          taxPercent: num(d.tax ?? d.taxPercent),
+          timePerDay: num(d.time ?? d.timePerDay),
+          noteId: null,
+          expenses: (d.expenses || []).map(e => ({
+            id: uid(),
+            name: e.name || "",
+            value: num(e.value),
+            type: (e.type === "percent" || e.type === "%" || e.type === "процент") ? "percent" : "fixed",
+            active: e.active !== false
+          }))
+        });
+      } else {
+        out.notes.push({
+          id: uid(),
+          title: d.title || d.name || "",
+          content: d.content || d.body || "",
+          date: Date.now(),
+          projectId: null
+        });
+      }
+    });
+    return out;
+  }
+
+  function parseBlocks(text){
+    const out = { projects: [], notes: [], settings: null };
+    const lines = text.split(/\r?\n/);
+    let current = null;
+    let contentMode = false;
+    let contentLines = [];
+
+    function flush(){
+      if(!current) return;
+      if(contentMode) current.data.content = contentLines.join("\n").trim();
+      if(current.type === "project") out.projects.push(current.data);
+      else if(current.type === "note") out.notes.push(current.data);
+      else if(current.type === "settings") out.settings = current.data;
+      current = null; contentMode = false; contentLines = [];
+    }
+
+    function newBlock(type){
+      flush();
+      const t = type.toLowerCase();
+      let data = null, norm = null;
+      if(t === "project" || t === "проект"){
+        norm = "project";
+        data = { id: uid(), name: "", income: 0, taxPercent: 0, timePerDay: 0, noteId: null, expenses: [] };
+      } else if(t === "note" || t === "заметка"){
+        norm = "note";
+        data = { id: uid(), title: "", content: "", date: Date.now(), projectId: null };
+      } else if(t === "settings" || t === "настройки"){
+        norm = "settings";
+        data = {};
+      }
+      if(!norm) return false;
+      current = { type: norm, data };
+      return true;
+    }
+
+    for(let i = 0; i < lines.length; i++){
+      const raw = lines[i];
+      const trimmed = raw.trim();
+
+      const blockMatch = trimmed.match(/^#{2,}\s*(\S+)/);
+      if(blockMatch){
+        if(newBlock(blockMatch[1])) continue;
+      }
+
+      if(!current) continue;
+      if(trimmed.startsWith("#")) continue;
+      if(trimmed === "") {
+        if(contentMode) contentLines.push("");
+        continue;
+      }
+
+      if(contentMode){
+        contentLines.push(raw);
+        continue;
+      }
+
+      const kv = raw.match(/^\s*([^:]+):\s*(.*)$/);
+      if(!kv) continue;
+      const key = kv[1].trim().toLowerCase();
+      const value = kv[2].trim();
+
+      if(key === "content" || key === "текст" || key === "содержание" || key === "описание"){
+        if(current.type !== "note") continue;
+        contentMode = true;
+        contentLines = value ? [value] : [];
+        continue;
+      }
+
+      if(current.type === "project"){
+        if(key === "name" || key === "название" || key === "имя") current.data.name = value;
+        else if(key === "income" || key === "доход") current.data.income = num(value);
+        else if(key === "tax" || key === "налог") current.data.taxPercent = num(value);
+        else if(key === "time" || key === "время") current.data.timePerDay = num(value);
+        else if(key === "expense" || key === "расход" || key === "затрата"){
+          const parts = value.split("|").map(s => s.trim());
+          const expName = parts[0] || "";
+          const expValue = num(parts[1]);
+          const expType = /percent|процент|%/i.test(parts[2] || "") ? "percent" : "fixed";
+          current.data.expenses.push({ id: uid(), name: expName, value: expValue, type: expType, active: true });
+        }
+      } else if(current.type === "note"){
+        if(key === "title" || key === "заголовок" || key === "название") current.data.title = value;
+        else if(key === "content" || key === "текст"){ contentMode = true; contentLines = value ? [value] : []; }
+      } else if(current.type === "settings"){
+        if(key === "startdate" || key === "start" || key === "начало") current.data.startDate = value;
+        else if(key === "enddate" || key === "end" || key === "конец") current.data.endDate = value;
+        else if(key === "availabletime" || key === "avail" || key === "время") current.data.availableTimePerDay = num(value);
+        else if(key === "workdays" || key === "рабочие"){
+          current.data.workDays = value.split(",").map(s => parseInt(s.trim(),10)).filter(n => !isNaN(n));
+        }
+        else if(key === "excludeholidays" || key === "праздники"){
+          current.data.excludeHolidays = /^(true|1|да|yes|on)$/i.test(value);
+        }
+      }
+    }
+    flush();
+    return out;
+  }
+
+  /* ============ ИМПОРТ: UI ============ */
+  function updatePreview(){
+    const text = $("#importText").value.trim();
+    const box = $("#importPreview");
+    if(!text){ box.innerHTML = ""; return; }
+    try {
+      const p = parseImport(text);
+      if(p.projects.length === 0 && p.notes.length === 0 && !p.settings){
+        box.innerHTML = `<div class="time-status warn">⚠️ Не найдено ни проектов, ни заметок. Проверь формат.</div>`;
+        return;
+      }
+      let html = `<div class="time-status ok">✅ Найдено: <b>${p.projects.length}</b> проектов, <b>${p.notes.length}</b> заметок${p.settings ? ", + настройки" : ""}</div>`;
+      if(p.projects.length){
+        html += `<div class="preview-list"><b>Проекты:</b> ${p.projects.map(x => x.name || "без названия").join(", ")}</div>`;
+      }
+      if(p.notes.length){
+        html += `<div class="preview-list"><b>Заметки:</b> ${p.notes.map(x => x.title || "без названия").join(", ")}</div>`;
+      }
+      box.innerHTML = html;
+    } catch(e){
+      box.innerHTML = `<div class="time-status warn">⚠️ ${e.message}</div>`;
+    }
+  }
+
+  function performImport(mode){
+    const text = $("#importText").value;
+    try {
+      const parsed = parseImport(text);
+      if(parsed.projects.length === 0 && parsed.notes.length === 0 && !parsed.settings){
+        alert("Не найдено ни одного проекта или заметки. Проверь формат.");
+        return;
+      }
+      if(mode === "replace"){
+        if(!confirm("Заменить ВСЕ существующие проекты и заметки? Это действие необратимо (только через Ctrl+Z браузера).")) return;
+        state.projects = parsed.projects;
+        state.notes = parsed.notes;
+      } else {
+        state.projects.push(...parsed.projects);
+        state.notes.push(...parsed.notes);
+      }
+      if(parsed.settings){
+        state.settings = Object.assign(state.settings, parsed.settings);
+      }
+      fillSettingsInputs(); renderWeekdays(); renderExcluded();
+      renderProjects(); renderNotes();
+      markDirty();
+      $("#importPreview").innerHTML = `<div class="time-status ok">✅ Импортировано: ${parsed.projects.length} проектов, ${parsed.notes.length} заметок.</div>`;
+      $("#importText").value = "";
+      setTimeout(() => switchTab("finance"), 700);
+    } catch(e){
+      alert("Ошибка импорта: " + e.message);
+    }
+  }
+
+  const AI_PROMPT = `Ты — ассистент, который генерирует данные для моего финансового трекера.
+Отвечай СТРОГО в формате ниже. Без пояснений, без markdown-обёрток, без вступлений.
+
+=== ФОРМАТ ПРОЕКТА ===
+## PROJECT
+name: Название проекта
+income: <доход в рабочий день, ₽, только число>
+tax: <налог, %, только число>
+time: <время в день, минуты, только число>
+expense: <название расхода> | <число> | <fixed или percent>
+expense: <название расхода> | <число> | <fixed или percent>
+
+=== ФОРМАТ ЗАМЕТКИ ===
+## NOTE
+title: Заголовок заметки
+content: Свободный многострочный текст.
+Может содержать любые переносы строк.
+
+=== ФОРМАТ НАСТРОЕК (необязательно) ===
+## SETTINGS
+startDate: YYYY-MM-DD
+endDate: YYYY-MM-DD
+availableTime: <минуты в день, только число>
+workDays: 1,2,3,4,5
+excludeHolidays: true
+
+=== ПРАВИЛА ===
+1. Один блок = один проект, одна заметка или одни настройки.
+2. Блоки разделяются пустой строкой.
+3. Каждый блок начинается со строки "## PROJECT" / "## NOTE" / "## SETTINGS".
+4. Поля "name:", "income:", "tax:", "time:", "expense:" — только в проекте.
+5. Поля "title:" и "content:" — только в заметке.
+6. Все строки в формате "ключ: значение".
+7. "expense:" повторяется столько раз, сколько расходов у проекта.
+8. "fixed" — фиксированная сумма в ₽/день, "percent" — процент от дневного дохода.
+9. Все числа — только цифры, без ₽, % и пробелов внутри.
+10. Не пиши ничего, кроме блоков. Никаких "Вот ваш план:" и т.п.
+
+=== ЗАДАЧА ===
+<Здесь опиши, что нужно. Пример: "Создай 5 проектов для заработка в моём городе: кофейня, автомойка, доставка. И 3 заметки с идеями.">
+
+Выведи только блоки.`;
+
+  function copyPrompt(){
+    const doCopy = () => {
+      navigator.clipboard.writeText(AI_PROMPT).then(
+        () => alert("✅ Промт скопирован. Вставь его в ChatGPT/Claude/etc. и добавь свою задачу."),
+        () => fallbackCopy()
+      );
+    };
+    const fallbackCopy = () => {
+      const ta = document.createElement("textarea");
+      ta.value = AI_PROMPT;
+      ta.style.position = "fixed"; ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); alert("✅ Промт скопирован."); }
+      catch(e){ alert("Не удалось скопировать. Выдели текст вручную."); }
+      document.body.removeChild(ta);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText) doCopy();
+    else fallbackCopy();
+  }
+
+  const EXAMPLE = `## PROJECT
+name: ИИ-контент для соцсетей
+income: 1000
+tax: 6
+time: 60
+expense: Подписка на ИИ | 100 | fixed
+expense: Продвижение | 5 | percent
+
+## PROJECT
+name: Перепродажа на Авито
+income: 800
+tax: 6
+time: 45
+expense: Упаковка и доставка | 100 | fixed
+expense: Реклама объявлений | 3 | percent
+
+## NOTE
+title: Идея: цифровые витрины для магазинов
+content: Обойти 10 местных заведений и предложить простую страницу
+с меню и кнопкой заказа в WhatsApp. 3000 ₽ за настройку, 1000 ₽/мес.
+Почти пассивный доход после запуска.`;
+
+  /* ============ ИНИЦИАЛИЗАЦИЯ ============ */
+  function init(){
+    load();
+    fillSettingsInputs(); renderWeekdays(); renderExcluded(); bindSettings();
+
+    $$(".nav button").forEach(b => {
+      b.addEventListener("click", () => switchTab(b.dataset.tab));
+    });
+
+    $("#addProject").addEventListener("click", () => {
+      state.projects.push({
+        id: uid(), name: "", income: 0, taxPercent: 0, timePerDay: 0,
+        noteId: null,
+        expenses: [{ id: uid(), name: "Прочие расходы", value: 0, type: "fixed", active: true }]
+      });
+      renderProjects(); markDirty();
+      const cards = $$(".project");
+      const last = cards[cards.length - 1];
+      if(last) last.querySelector(".project-name").focus();
+    });
+
+    $("#addNote").addEventListener("click", () => {
+      state.notes.unshift({ id: uid(), title: "", content: "", date: Date.now(), projectId: null });
+      renderNotes(); markDirty();
+      const titles = $$(".note-title");
+      if(titles[0]) titles[0].focus();
+    });
+
+    $("#gotoImport").addEventListener("click", () => switchTab("import"));
+    $("#gotoImport2").addEventListener("click", () => switchTab("import"));
+
+    $("#saveBtn").addEventListener("click", save);
+
+    // Import
+    let previewTimer;
+    $("#importText").addEventListener("input", () => {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(updatePreview, 250);
+    });
+    $("#importAppend").addEventListener("click", () => performImport("append"));
+    $("#importReplace").addEventListener("click", () => performImport("replace"));
+    $("#copyPrompt").addEventListener("click", copyPrompt);
+    $("#loadExample").addEventListener("click", () => {
+      $("#importText").value = EXAMPLE;
+      updatePreview();
+    });
+    $("#clearImport").addEventListener("click", () => {
+      $("#importText").value = "";
+      $("#importPreview").innerHTML = "";
+    });
+
+    document.addEventListener("keydown", e => {
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s"){
+        e.preventDefault(); save();
+      }
+    });
+    window.addEventListener("beforeunload", e => {
+      if(dirty){ e.preventDefault(); e.returnValue = ""; }
+    });
+
+    renderProjects();
+    renderNotes();
+    switchTab("finance");
+    $("#status").textContent = "Данные хранятся локально";
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
